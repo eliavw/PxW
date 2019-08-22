@@ -17,7 +17,7 @@ msg = "Hello world"
 print(msg)
 ```
 
-And you can add all kinds of cool blocks to draw addition to something,
+And you can add all kinds of cool blocks to draw attention to something,
 
 !!! example
     This is a perfect example of such an `admonition` block as they are called. They come in many types and their icons adapt automagically.
