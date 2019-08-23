@@ -1,4 +1,3 @@
-
 WEKA = ""
 
 
@@ -17,3 +16,7 @@ class Weka(object):
         return
 
     # Tier 2 Methods
+    def generate_command(self):
+        cmd = None
+
+        return cmd
