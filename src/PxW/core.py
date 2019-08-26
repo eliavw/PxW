@@ -32,9 +32,7 @@ class J48(object):
         self.confidence_factor = confidence_factor
         self.min_samples_leaf = min_samples_leaf
 
-        self.algorithm_command = """
-        {} -{} {} -{} {}
-        """.format(
+        self.algorithm_command = """{} -{} {} -{} {}""".format(
             self.prefixes.get("J48"),
             self.prefixes.get("confidence_factor"),
             self.confidence_factor,
@@ -53,23 +51,17 @@ class J48(object):
         self.model_filename = model_filename
 
         if self.model_filename is not None:
-            self.model_command = """
-            -{} {}
-            """.format(
+            self.model_command = """-{} {}""".format(
                 self.prefixes.get("model"), self.model_filename
             )
         else:
             self.model_command = ""
 
-        self.train_command = """
-        - {} {}
-        """.format(
+        self.train_command = """- {} {}""".format(
             self.prefixes.get("train"), train_filename
         )
 
-        command = """
-        {} {} {} {}
-        """.format(
+        self.command = """{} {} {} {}""".format(
             self.prefixes.get("weka"),
             self.algorithm_command,
             self.train_command,
@@ -79,11 +71,11 @@ class J48(object):
         shell = ShellTask()
 
         with Flow("fit") as f:
-            fit = shell(command=command)
+            fit = shell(command=self.command)
 
         status = f.run()
 
-        if verbose:
+        if verbose and status.is_successful():
             print(status.result[fit].result.decode("utf-8"))
 
         return status
