@@ -6,7 +6,7 @@ try:
     dist_name = __name__
     __version__ = get_distribution(dist_name).version
 
-    from .core import Weka
+    from .core import J48
 
 except DistributionNotFound:
     __version__ = "unknown"
