@@ -1,9 +1,12 @@
+from io import StringIO
+
+import pandas as pd
 import prefect
-from prefect import Task, Flow
+from prefect import Flow, Task
 from prefect.tasks.shell import ShellTask
 
-
-WEKA = "/home/elia/Software/weka/weka-3-8-3/weka.jar"
+# WEKA = "/home/elia/Software/weka/weka-3-8-3/weka.jar"
+WEKA = "/home/zissou/Software/weka/weka.jar"
 
 
 class J48(object):
@@ -13,10 +16,12 @@ class J48(object):
         "J48": "weka.classifiers.trees.J48",
         "train": "t",
         "test": "T",
-        "model": "d",
+        "dump_model": "d",
+        "load_model": "l",
         "confidence_factor": "C",
         "min_samples_leaf": "M",
         "no_cv": "no-cv",
+        "predict": "p",
     }
 
     # Main Methods
@@ -25,9 +30,7 @@ class J48(object):
     ):
 
         self.algorithm = self.prefixes.get("J48")
-
-        self.train_filename = kwargs.get("train_filename", None)
-        self.test_filename = kwargs.get("test_filename", None)
+        self.model_filename = "tree.model"  # Default value
 
         self.confidence_factor = confidence_factor
         self.min_samples_leaf = min_samples_leaf
@@ -45,20 +48,19 @@ class J48(object):
 
         return
 
-    def fit(self, train_filename=None, model_filename=None, verbose=True):
+    def fit(self, train_filename, model_filename=None, verbose=True):
 
         self.train_filename = train_filename
-        self.model_filename = model_filename
 
-        if self.model_filename is not None:
-            self.model_command = """-{} {}""".format(
-                self.prefixes.get("model"), self.model_filename
-            )
-        else:
-            self.model_command = ""
+        if model_filename is not None:
+            self.model_filename = model_filename
 
-        self.train_command = """- {} {}""".format(
-            self.prefixes.get("train"), train_filename
+        self.model_command = """-{} {}""".format(
+            self.prefixes.get("dump_model"), self.model_filename
+        )
+
+        self.train_command = """-{} {}""".format(
+            self.prefixes.get("train"), self.train_filename
         )
 
         self.command = """{} {} {} {}""".format(
@@ -80,5 +82,56 @@ class J48(object):
 
         return status
 
-    def predict(self, **kwargs):
-        return
+    def predict(self, test_filename, prediction_filename=None, verbose=True, **kwargs):
+
+        self.test_filename = test_filename
+
+        if prediction_filename is not None:
+            self.prediction_filename = prediction_filename
+        else:
+            self.prediction_filename = 0  # Weka default
+
+        self.model_command = """-{} {}""".format(
+            self.prefixes.get("load_model"), self.model_filename
+        )
+
+        self.test_command = """-{} {}""".format(
+            self.prefixes.get("test"), self.test_filename
+        )
+
+        self.predict_command = """-classifications weka.classifiers.evaluation.output.prediction.CSV"""
+
+        self.command = """{} {} {} {} {}""".format(
+            self.prefixes.get("weka"),
+            self.prefixes.get("J48"),
+            self.test_command,
+            self.model_command,
+            self.predict_command,
+        )
+
+        shell = ShellTask()
+
+        with Flow("predict") as f:
+            predict = shell(command=self.command)
+
+        status = f.run()
+
+        if verbose and status.is_successful():
+            output = status.result[predict].result.decode("utf-8")
+
+            df = self._parse_output(output)
+
+            return df
+        else:
+            return status
+
+    @staticmethod
+    def _parse_output(output):
+        df = pd.read_csv(
+            StringIO(output),
+            index_col=0,
+            header=1,
+            usecols=[0, 1, 2],
+            lineterminator="\n",
+        )
+        return df
