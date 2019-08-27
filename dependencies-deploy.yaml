@@ -13,3 +13,5 @@ dependencies:
   - ipython
   - matplotlib
   - scikit-learn
+  - pip:
+    - prefect
