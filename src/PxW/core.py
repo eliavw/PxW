@@ -35,7 +35,7 @@ class J48(object):
         self.confidence_factor = confidence_factor
         self.min_samples_leaf = min_samples_leaf
 
-        self.algorithm_command = """{} -{} {} -{} {}""".format(
+        self.algorithm_command = '{} -{} {} -{} {}'.format(
             self.prefixes.get("J48"),
             self.prefixes.get("confidence_factor"),
             self.confidence_factor,
@@ -48,7 +48,7 @@ class J48(object):
 
         return
 
-    def fit(self, train_filename, model_filename=None, verbose=True):
+    def fit(self, train_filename, model_filename=None, verbose=False):
 
         self.train_filename = train_filename
 
@@ -82,7 +82,7 @@ class J48(object):
 
         return status
 
-    def predict(self, test_filename, prediction_filename=None, verbose=True, **kwargs):
+    def predict(self, test_filename, prediction_filename=None, verbose=False, **kwargs):
 
         self.test_filename = test_filename
 
@@ -99,7 +99,9 @@ class J48(object):
             self.prefixes.get("test"), self.test_filename
         )
 
-        self.predict_command = """-classifications weka.classifiers.evaluation.output.prediction.CSV"""
+        self.predict_command = (
+            """-classifications weka.classifiers.evaluation.output.prediction.CSV"""
+        )
 
         self.command = """{} {} {} {} {}""".format(
             self.prefixes.get("weka"),
